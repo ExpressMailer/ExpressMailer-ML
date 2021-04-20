@@ -24,7 +24,7 @@ cors = CORS(app, resource={
     }
 })
 
-# model = pickle.load(open('./spamdetection.pkl', 'rb'))
+model = pickle.load(open('./spamdetection.pkl', 'rb'))
 
 def split_into_lemmas(message):
     message = message.lower()
