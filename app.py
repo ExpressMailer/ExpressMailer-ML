@@ -1,3 +1,6 @@
+# Linux: python3 -m venv env , source env/bin/activate, pip3  install -r requirements.txt
+# Windows: python -m venv env , .\env\Scripts\activate, pip  install -r requirements.txt
+
 from flask import Flask, request, jsonify, render_template
 import pickle
 import sklearn
@@ -5,6 +8,13 @@ from flask_cors import CORS
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from textblob import TextBlob
 
+import nltk
+from nltk import tokenize
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize 
+from operator import itemgetter
+import math
+stop_words = set(stopwords.words('english'))
 
 app = Flask(__name__)
 CORS(app)
@@ -55,7 +65,60 @@ def predict():
         return {"val": True}
     else:
         return {"val": False}
-    
+
+@app.route('/keywords',methods=['GET','POST'])
+def generate_keywords():    
+    print('---------- Generating keywords now ----------')
+    data = request.get_json() or {}
+    message = data.get('message', '') #'I am a graduate. I want to learn Python. I like learning Python. Python is easy. Python is interesting. Learning increases thinking. Everyone should invest time in learning'
+    n = int(data.get('n', 5))
+    keywords = get_top_n(message, n)
+    print(keywords)
+    return {"keywords":keywords}
+
+
+
+def get_top_n(doc, n):
+    # algo
+    total_words = doc.split()
+    total_word_length = len(total_words)
+    total_sentences = tokenize.sent_tokenize(doc)
+    total_sent_len = len(total_sentences)
+
+    tf_score = {}
+    for each_word in total_words:
+        each_word = each_word.replace('.','')
+        if each_word not in stop_words:
+            if each_word in tf_score:
+                tf_score[each_word] += 1
+            else:
+                tf_score[each_word] = 1
+
+    tf_score.update((x, y/int(total_word_length)) for x, y in tf_score.items())
+
+    idf_score = {}
+    for each_word in total_words:
+        each_word = each_word.replace('.','')
+        if each_word not in stop_words:
+            if each_word in idf_score:
+                idf_score[each_word] = check_sent(each_word, total_sentences)
+            else:
+                idf_score[each_word] = 1
+
+
+    idf_score.update((x, math.log(int(total_sent_len)/y)) for x, y in idf_score.items())
+
+    tf_idf_score = {key: tf_score[key] * idf_score.get(key, 0) for key in tf_score.keys()}
+
+    # final result
+    result = dict(sorted(tf_idf_score.items(), key = itemgetter(1), reverse = True)[:n]) 
+    result_array = result.keys()
+    return list(result_array)
+
+def check_sent(word, sentences): 
+    final = [all([w in x for w in word]) for x in sentences] 
+    sent_len = [sentences[i] for i in range(0, len(final)) if final[i]]
+    return int(len(sent_len))
 
 if __name__ == "__main__":
     app.run(debug=True)
