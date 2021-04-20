@@ -49,6 +49,10 @@ def features_transform(mail):
     #return result of transforms
     return messages_tfidf
 
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
+    
 @app.route('/predict',methods=['POST'])
 def predict():
     print('in server')
