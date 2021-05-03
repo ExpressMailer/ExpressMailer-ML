@@ -55,7 +55,7 @@ A step by step series of examples that tell you how to get a development env run
 
 1. Clone the repo
   ```
-  $ git clone https://github.com/tushargithub44/ExpressMailer-ML
+  $ git clone https://github.com/ExpressMailer/ExpressMailer-ML.git
   $ cd ExpressMailer-ML
   ```
 
